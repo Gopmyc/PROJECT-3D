@@ -4,8 +4,8 @@ Loader.__index = Loader
 -- // TODO : Subsequently set up a very fast loading and unloading system with thread for very high priority resources: UI, Sound, Font
 function Loader:new(config)
     local self = setmetatable({}, Loader)
-    self.config = config
-    self.resources = { images = {}, sounds = {}, fonts = {}, models = {}, data = {} }
+    self.config = config.loader
+    self.resources = { images = {}, sounds = {}, fonts = {}, models = {}, shaders = {}, data = {} }
     self.cacheOrder = {}
 	self.cacheLimit = 10
     return self
@@ -25,6 +25,8 @@ function Loader:loadResource(category, name, path)
         return love.graphics.newFont(path.path, path.size)
     elseif category == "models" then
         return engine.render:loadObject(path)
+    elseif category == "shaders" then
+        return love.graphics.newShader(path)
     elseif category == "data" then
         local file = love.filesystem.read(path)
         return file and love.filesystem.load(file)()
@@ -39,11 +41,6 @@ function Loader:getResource(category, name)
         end
 
         local path = self.config[category][name].path
-		print(self.config[category])
-		print(self.config[category][name])
-		for k, v in pairs (self.config[category][name]) do
-			
-		end
         self.resources[category][name] = self:loadResource(category, name, path)
         table.insert(self.cacheOrder, { category = category, name = name })
     end

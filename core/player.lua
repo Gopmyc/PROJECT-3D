@@ -1,3 +1,6 @@
+local inventory = require("core/modules/inventory/inventoryManager"):new()
+local item = require("core/modules/inventory/item")
+
 local Player = {}
 Player.__index = Player
 
@@ -8,12 +11,17 @@ function Player.new(model)
 	self.speed = 60
 	self.maxSpeed = 100
 	self.acceleration = 20000
-	self.airAcceleration = self.acceleration * 0.03 -- Réduction de l'accélération dans les airs
+	self.airAcceleration = self.acceleration * 0.03
 	self.velocity = {x = 0, y = 0, z = 0}
 	self.jumpHeight = 5
 	self.model = model or engine.render:loadObject("objects/player")
 	self.transform = self.model:getTransform()
+	self.inventory = inventory:createInventory(16)
+	self.inventoryOpen = false
 
+	--------- TEST ---------
+	local item_t = item:new()
+	self.inventory:addItem(item_t)
 	return self
 end
 
@@ -52,7 +60,6 @@ function Player:move(dt)
 		local speed = math.sqrt(v.x ^ 2 + v.z ^ 2)
 		local dot = speed > 0 and (ax * v.x / speed + az * v.z / speed) or 0
 
-		-- Utilise une accélération réduite si le joueur est dans les airs
 		local accel = (self.collider.touchedFloor and self.acceleration or self.airAcceleration) * math.max(0, 1 - speed / self.maxSpeed * math.abs(dot))
 		self.collider:applyForce(ax * accel, 0, az * accel)
 	end
@@ -65,6 +72,7 @@ function Player:jump()
 end
 
 function Player:update(dt)
+	if self.inventoryOpen then return end
 	self:move(dt)
 	self:jump()
 	engine.cam:lookAt(engine.render.camera, self.collider:getPosition() + engine.render.vec3(0, 2, 0), 5)
@@ -76,6 +84,10 @@ function Player:draw()
 	self.model:translateWorld(pos)
 
 	engine.render:draw(self.model)
+end
+
+function Player:keysPressed(key)
+	if key == "tab" then self.inventoryOpen = not self.inventoryOpen love.mouse.setRelativeMode(not self.inventoryOpen) end
 end
 
 return Player
