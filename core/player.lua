@@ -16,8 +16,7 @@ function Player.new(model)
 	self.jumpHeight = 5
 	self.model = model or engine.render:loadObject("objects/player")
 	self.transform = self.model:getTransform()
-	self.inventory = inventory:createInventory(16)
-	self.inventoryOpen = false
+	self.inventory = inventory:createInventory(15)
 
 	--------- TEST ---------
 	local item_t = item:new()
@@ -72,10 +71,12 @@ function Player:jump()
 end
 
 function Player:update(dt)
-	if self.inventoryOpen then return end
-	self:move(dt)
-	self:jump()
-	engine.cam:lookAt(engine.render.camera, self.collider:getPosition() + engine.render.vec3(0, 2, 0), 5)
+	if not self.inventory.isOpen then
+		self:move(dt)
+		self:jump()
+		engine.cam:lookAt(engine.render.camera, self.collider:getPosition() + engine.render.vec3(0, 2, 0), 5)
+	end
+	self.inventory:updateAnimation(dt)
 end
 
 function Player:draw()
@@ -87,7 +88,7 @@ function Player:draw()
 end
 
 function Player:keysPressed(key)
-	if key == "tab" then self.inventoryOpen = not self.inventoryOpen love.mouse.setRelativeMode(not self.inventoryOpen) end
+	if key == "tab" then player.inventory:toggle() love.mouse.setRelativeMode(not self.inventory.isOpen) end
 end
 
 return Player

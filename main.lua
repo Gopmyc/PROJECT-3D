@@ -74,7 +74,7 @@ function love.draw()
 
     love.graphics.setCanvas()
 
-    if player.inventoryOpen then
+    if player.inventory.isOpen then
         love.graphics.setShader(shaders.blurShader)
         shaders.blurShader:send("radius", 5)
     end
@@ -82,7 +82,7 @@ function love.draw()
     love.graphics.draw(engine.render.canvas)
     love.graphics.setShader()
 
-    if player.inventoryOpen then player.inventory:draw() end
+    if player.inventory.isOpen then player.inventory:draw() end
 
     love.graphics.setColor(1, 1, 1)
     love.graphics.print(love.timer.getFPS(), 10, 10)
@@ -90,7 +90,7 @@ end
 
 
 function love.mousemoved(_, _, x, y)
-    if not player.inventoryOpen then engine.cam:mousemoved(x, y) end
+    if not player.inventory.isOpen then engine.cam:mousemoved(x, y) end
 end
 
 function love.keypressed(key)
