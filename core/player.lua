@@ -88,7 +88,7 @@ function Player:draw()
 end
 
 function Player:keysPressed(key)
-	if key == "tab" then player.inventory:toggle() love.mouse.setRelativeMode(not self.inventory.isOpen) end
+	if key == "tab" then self.inventory:toggle() love.mouse.setRelativeMode(not self.inventory.isOpen) end
 end
 
 return Player

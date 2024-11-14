@@ -9,6 +9,11 @@ function Inventory:new(size)
     inventory.isAnimating = false
     inventory.animationProgress = 0
     inventory.animationSpeed = 5
+    inventory.draggedItem = nil
+    inventory.draggedSlotIndex = nil
+    inventory.isDragging = false
+    inventory.dragOffsetX = 0
+    inventory.dragOffsetY = 0
     inventory.slots = {}
     for i = 1, size do
         inventory.slots[i] = Slot:new()
@@ -46,11 +51,39 @@ function Inventory:getItem(name)
     return nil
 end
 
+function Inventory:getSlotSize()
+    local screenWidth = love.graphics.getDimensions()
+    local baseSlotSize = 125
+    local referenceWidth = 1920
+    return (screenWidth / referenceWidth) * baseSlotSize
+end
+
+function Inventory:getSlotPosition(index)
+    local rows, cols = 3, 5
+    local screenWidth, screenHeight = love.graphics.getDimensions()
+    local baseSlotSize = 125
+    local padding = 15
+    local referenceWidth = 1920
+    local slotSize = (screenWidth / referenceWidth) * baseSlotSize
+
+    local inventoryWidth = cols * slotSize + (cols - 1) * padding
+    local inventoryHeight = rows * slotSize + (rows - 1) * padding
+    local startX = (screenWidth - inventoryWidth) / 2
+    local startY = (screenHeight - inventoryHeight) / 2
+
+    local row = math.floor((index - 1) / cols)
+    local col = (index - 1) % cols
+    local slotX = startX + col * (slotSize + padding)
+    local slotY = startY + row * (slotSize + padding)
+    
+    return slotX, slotY
+end
+
 function Inventory:toggle()
     if not self.isAnimating then
         self.isAnimating = true
         self.isOpen = not self.isOpen
-        self.animationProgress = self.isOpen and 0 or 1  -- Reset la progression selon l’état cible
+        self.animationProgress = self.isOpen and 0 or 1
     end
 end
 
@@ -60,18 +93,78 @@ function Inventory:updateAnimation(dt)
         self.animationProgress = self.animationProgress + direction * self.animationSpeed * dt
         self.animationProgress = math.min(math.max(self.animationProgress, 0), 1)
 
-        -- Arrêter l'animation si elle est terminée
         if self.animationProgress == 0 or self.animationProgress == 1 then
             self.isAnimating = false
         end
     end
 end
 
-function Inventory:draw()
-    -- Ne dessine l'inventaire que si l'animation est en cours ou s'il est ouvert
-    if self.animationProgress <= 0 then
-        return
+function Inventory:cancelDrag()
+    if self.draggedItem and self.draggedSlotIndex then
+        self.slots[self.draggedSlotIndex].item = self.draggedItem
     end
+
+    self.draggedItem = nil
+    self.draggedSlotIndex = nil
+    self.isDragging = false
+end
+
+function Inventory:mousepressed(x, y, button)
+    if button == 1 then
+        for i, slot in ipairs(self.slots) do
+            local slotX, slotY = self:getSlotPosition(i)
+            local slotSize = self:getSlotSize()
+
+            if x >= slotX and x <= slotX + slotSize and y >= slotY and y <= slotY + slotSize then
+                if slot.item then
+                    self.isDragging = true
+                    self.draggedItem = slot.item
+                    self.draggedSlotIndex = i
+                    self.dragOffsetX = x
+                    self.dragOffsetY = y
+                    slot.item = nil
+                end
+                break
+            end
+        end
+    end
+end
+
+function Inventory:mousereleased(x, y, button)
+    if button == 1 and self.isDragging then
+        self.isDragging = false
+        local droppedInSlot = false
+
+        for i, slot in ipairs(self.slots) do
+            local slotX, slotY = self:getSlotPosition(i)
+            local slotSize = self:getSlotSize()
+
+            if x >= slotX and x <= slotX + slotSize and y >= slotY and y <= slotY + slotSize then
+                if i ~= self.draggedSlotIndex then
+                    self.slots[self.draggedSlotIndex].item, slot.item = slot.item, self.draggedItem
+                else
+                    self.slots[self.draggedSlotIndex].item = self.draggedItem
+                end
+                droppedInSlot = true
+                break
+            end
+        end
+
+        if not droppedInSlot then
+            self:cancelDrag()
+        end
+    end
+end
+
+function Inventory:mousemoved(x, y)
+    if self.isDragging and self.draggedItem then
+        self.dragOffsetX = x
+        self.dragOffsetY = y
+    end
+end
+
+function Inventory:draw()
+    if self.animationProgress <= 0 then return end
 
     local screenWidth, screenHeight = love.graphics.getDimensions()
     local baseSlotSize = 125
@@ -79,18 +172,15 @@ function Inventory:draw()
     local referenceWidth = 1920
     local slotSize = (screenWidth / referenceWidth) * baseSlotSize
 
-    -- Ajustement pour la grille de 3x5
     local rows, cols = 3, 5
     local inventoryWidth = cols * slotSize + (cols - 1) * padding
     local inventoryHeight = rows * slotSize + (rows - 1) * padding
     local targetX = (screenWidth - inventoryWidth) / 2
     local targetY = (screenHeight - inventoryHeight) / 2
 
-    -- Calcul de la position animée en fonction de l'état d'ouverture/fermeture
-    local startY = screenHeight  -- Position de départ (en bas de l'écran)
+    local startY = screenHeight
     local animatedY = startY * (1 - self.animationProgress) + targetY * self.animationProgress
 
-    -- Dessiner le fond de l'inventaire avec animation
     local backgroundPadding = 40
     local backgroundX = targetX - backgroundPadding
     local backgroundY = animatedY - backgroundPadding
@@ -103,7 +193,6 @@ function Inventory:draw()
     local mouseX, mouseY = love.mouse.getPosition()
     local hoveredSlot = nil
 
-    -- Dessiner chaque slot avec animation
     for i = 1, rows do
         for j = 1, cols do
             local slotX = targetX + (j - 1) * (slotSize + padding)
@@ -117,24 +206,19 @@ function Inventory:draw()
                 love.graphics.setLineWidth(3)
                 love.graphics.rectangle("line", slotX, slotY, slotSize, slotSize, 20, 20)
                 
-                -- Sauvegarder le slot survolé pour afficher la description
                 hoveredSlot = self.slots[(i - 1) * cols + j]
             end
 
-            -- Afficher l'image de l'item, si présent
             local slot = self.slots[(i - 1) * cols + j]
             if slot and slot.item then
                 local itemImage = slot.item.img
                 local imageWidth, imageHeight = itemImage:getWidth(), itemImage:getHeight()
 
-                -- Calcul du facteur d'échelle pour s'adapter au slot
                 local scaleFactor = math.min(slotSize / imageWidth, slotSize / imageHeight)
 
-                -- Calcul des nouvelles dimensions de l'image redimensionnée
                 local scaledWidth = imageWidth * scaleFactor
                 local scaledHeight = imageHeight * scaleFactor
 
-                -- Centrer l'image dans le slot
                 local imageX = slotX + (slotSize - scaledWidth) / 2
                 local imageY = slotY + (slotSize - scaledHeight) / 2
 
@@ -157,6 +241,20 @@ function Inventory:draw()
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf("Descriptions : " .. itemDesc, rectX + 10, rectY + 10, rectWidth - 20, "left")
     end
+
+    if self.isDragging and self.draggedItem then
+        love.graphics.setColor(1, 1, 1)
+        local draggedImage = self.draggedItem.img
+        local imageWidth, imageHeight = draggedImage:getWidth(), draggedImage:getHeight()
+    
+        local slotSize = self:getSlotSize()
+        local scaleFactor = math.min(slotSize / imageWidth, slotSize / imageHeight)
+    
+        local imageX = self.dragOffsetX - (imageWidth * scaleFactor) / 2
+        local imageY = self.dragOffsetY - (imageHeight * scaleFactor) / 2
+    
+        love.graphics.draw(draggedImage, imageX, imageY, 0, scaleFactor, scaleFactor)
+    end    
 
     love.graphics.setColor(1, 1, 1)
 end
