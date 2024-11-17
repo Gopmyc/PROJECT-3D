@@ -4,6 +4,8 @@
         -- Luke100000 (https://github.com/Luke100000)
         -- sewbacca (https://github.com/sewbacca)
         -- ChillerDragon (https://github.com/ChillerDragon)
+    -- GameStateManager :
+        -- GwyrddGlas (https://github.com/GwyrddGlas/GameStateManager)
 ## 3D MODELS ##
     -- Map Models : Minzkraut (https://sketchfab.com/Minzkraut)
     -- Map Models : 3Donimus (https://poly.pizza/u/3Donimus)
