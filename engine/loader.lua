@@ -9,6 +9,7 @@ local vec3 = lib.vec3
 
 --tags that will get recognized
 lib.meshTags = {
+	["RENDER"] = true,
 	["PHYSICS"] = true,
 	["LOD"] = true,
 	["POS"] = true,

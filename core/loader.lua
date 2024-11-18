@@ -19,7 +19,7 @@ function Loader:loadResource(category, name, path)
     if category == "images" then
         return love.graphics.newImage(path)
     elseif category == "sounds" then
-        local bufferType = self.config[category][name].buffer or "static"
+        local bufferType = self.config.assets[category][name].buffer or "static"
         return love.audio.newSource(path, bufferType)
     elseif category == "fonts" then
         return love.graphics.newFont(path.path, path.size)
@@ -40,7 +40,7 @@ function Loader:getResource(category, name)
             self:releaseResource(oldest.category, oldest.name)
         end
 
-        local path = self.config[category][name].path
+        local path = self.config.assets[category][name].path
         self.resources[category][name] = self:loadResource(category, name, path)
         table.insert(self.cacheOrder, { category = category, name = name })
     end
@@ -71,7 +71,7 @@ end
 function Loader:releaseLowPriorityResources()
     for category, resources in pairs(self.resources) do
         for name, resource in pairs(resources) do
-            if self.config[category][name].priority == 0 then
+            if self.config.assets[category][name].priority == 0 then
                 self:releaseResource(category, name)
             end
         end
