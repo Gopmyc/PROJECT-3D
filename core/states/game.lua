@@ -11,7 +11,7 @@ function game:enter()
     engine:loadRendering(function() end, function() end)
     
     engine.physics.world:add(engine.physics:newPhysicsObject(engine.assets.models.map))
-    engine.players[0] = require("core/player").new(engine.assets.models.player)
+    engine.players[0] = require("core/objects/player").new(engine.assets.models.player)
 
     --// TODO : Setup light sources
 
@@ -26,6 +26,8 @@ function game:update(dt)
 end
 
 function game:draw()
+    love.graphics.setCanvas(engine.render.canvas)
+    love.graphics.clear()
     engine.render:prepare()
     engine.render:addLight(engine.render.sun)
     for _, light in pairs(engine.render.lights) do

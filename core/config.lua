@@ -5,13 +5,13 @@ local config = {
 		rendering = {
 			autoExposure	= true,
 			refraction		= true,
-			dayTime			= 0.7,
+			dayTime			= 0.5,
 		},
 	},
 	states = {
-		loading		=	{ path = "core/states/loading", id = "loading"		},
-		--menu		=	{ path = "core/states/menu", id = "menu" 			},
-		game		=	{ path = "core/states/game", id = "game"			},
+		loading		=	{ path = "core/states/loading",							id = "loading"	},
+		--menu		=	{ path = "core/states/menu",							id = "menu"		},
+		game		=	{ path = "core/states/game",							id = "game"		},
 	},
 	loader = {
 		assets = {

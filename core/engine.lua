@@ -10,11 +10,11 @@ function engine.load(preLoaded, postLoaded)
 	self.render         = require("engine/init")
     self.sky            = require("engine/extensions/sky")
     self.cam            = require("engine/extensions/utils/cameraController")
-    self.utils          = require("engine/extensions/utils") -- // TODO : Modify to add more functions (print table)
+    self.utils          = require("core/utils")
     self.physics        = require("engine/extensions/physics/init")
     self.raytrace       = require("engine/extensions/raytrace")
     self.loader         = require("core/loader"):new(self.config)
-    self.states         = require("core/stateManager")
+    self.states         = require("core/stateManager").new()
 
     self.render.canvas  = love.graphics.newCanvas()
     self.physics.world  = self.physics:newWorld()
@@ -22,11 +22,11 @@ function engine.load(preLoaded, postLoaded)
     self.render.lights  = self.render.lights or {}
     self.players        = self.players or {}
     self.assets         = self.assets or {
-        images	= nil,
-        fonts 	= nil,
-        sounds	= nil,
-        models	= nil,
-        shaders	= nil,
+        images	= {},
+        fonts 	= {},
+        sounds	= {},
+        models	= {},
+        shaders	= {},
     }
 
     for k, v in pairs(self.config.states) do
@@ -50,12 +50,6 @@ function engine:loadRendering(preLoaded, postLoaded)
     self.render:init()
 
     postLoaded()
-end
-
-function engine:draw()
-    --love.graphics.setCanvas(self.render.canvas)
-    --love.graphics.clear()
-    self.states:draw()
 end
 
 function engine:drawShader(player)

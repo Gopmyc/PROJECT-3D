@@ -1,22 +1,21 @@
 local loading = {}
 loading.__index = loading
 
-function loading:enter(tbl)
+function loading:enter(files, buffer)
     local self = setmetatable({}, loading)
 
-	self.id = "loading"
-    self.data = {}
-    self.state = false
-    self.files = tbl
+    self.id = "loading"
+    self.files = files
+    self.buffer = buffer or {}
     self.done = 0
-    self.count = #tbl
-
+    self.count = #files
     return self
 end
 
 function loading:update(dt)
-    for _, v in pairs(self.files) do
-        self.data[v.name] = engine.loader:getResource(v.category, v.name)
+    if self.done < self.count then
+        local file = self.files[self.done + 1]
+        self.buffer[file.name] = engine.loader:getResource(file.category, file.name)
         self.done = self.done + 1
     end
 end
@@ -28,11 +27,15 @@ function loading:draw()
 end
 
 function loading:isFinished()
-	return self.done == self.count
+    return self.done == self.count
 end
 
 function loading:getData()
-    return self.data
+    return self.buffer
+end
+
+function loading:exit()
+    self.files = nil
 end
 
 return loading

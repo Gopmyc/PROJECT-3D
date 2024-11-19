@@ -1,102 +1,128 @@
-local GameStateManager = {
-    currentState    = nil,
-    currentArgs     = nil,
-	currentKey		= nil,
-    previousState   = nil,
-    previousArgs    = nil,
-	previousKey		= nil,
-    stateQueue      = {},
-	stateQueueData	= {},
-}
+local BinaryHeap = require("core/objects/binaryHeap")
 
-local function assertState(state)
-    assert(state == nil or type(state) == "table", "State must be a table or nil")
+local StateManager = {}
+StateManager.__index = StateManager
+
+function StateManager.new()
+    local self = setmetatable({}, StateManager)
+
+    self.currentState = nil
+    self.currentArgs = nil
+    self.currentKeyData = nil
+    self.currentBufferData = nil
+    self.previousState = nil
+    self.previousArgs = nil
+    self.previousKeyData = nil
+    self.previousBufferData = nil
+    self.stateQueue = BinaryHeap.new()
+    self.stateQueueData = {}
+
+    --- Memory management ---
+    self.gcThreshold = 50 * 1024
+    self.gcScale = 1.5
+    self.lastGCTime = 0
+    self.gcCooldown = 1.0
+
+    return self
 end
 
+--- Helper function to check if the function exists in the state ---
 local function assertFunction(state, funcName)
     if state and state[funcName] then
         assert(type(state[funcName]) == "function", funcName .. " must be a function")
     end
 end
 
-local function sortQueue()
-    table.sort(GameStateManager.stateQueue, function(a, b)
-        return a.priority > b.priority
-    end)
-end
-
 --- Get the current state ---
-function GameStateManager:getCurrentState()
-	if not self.currentState or not self.currentState.id then
-		return nil
-	end
-	return self.currentState.id
+function StateManager:getCurrentState()
+    if not self.currentState or not self.currentState.id then
+        return nil
+    end
+    return self.currentState.id
 end
 
 --- Get data from a state finish ---
-function GameStateManager:getStateQueueData(key)
-	return self.stateQueueData[key]
+function StateManager:getStateQueueData(key)
+    return self.stateQueueData[key]
 end
 
 --- Adds a state to the queue with priority ---
-function GameStateManager:addStateToQueue(state, priority, tbl, key)
-    table.insert(GameStateManager.stateQueue, {state = state, priority = priority, args = tbl, keyData = key})
-    sortQueue()
+function StateManager:addStateToQueue(state, priority, tbl, key, buffer)
+    self.stateQueue:insert(state, priority, tbl, key, buffer)
 end
 
 --- Execute the state at the head of the queue if the current state has completed ---
-function GameStateManager:processStateQueue()
-    if not self.currentState and #self.stateQueue > 0 then
-        local nextState = self.stateQueue[1]
-        table.remove(self.stateQueue, 1)
-        self:setState(nextState.state, nextState.args, nextState.keyData)
+function StateManager:processStateQueue()
+    if not self.currentState and self.stateQueue:size() > 0 then
+        local nextState = self.stateQueue:removeMax()  -- Extraire l'état avec la priorité la plus haute
+        self:setState(nextState.state, nextState.args, nextState.keyData, nextState.bufferData)
     end
 
     if self.currentState then
         local finish = self.currentState:isFinished()
         if finish then
-			if self.keyData then
-				self.stateQueueData[self.keyData] = self.currentState:getData()
-			end
-            if #self.stateQueue > 0 then
-                local nextState = self.stateQueue[1]
-                table.remove(self.stateQueue, 1)
-                self:setState(nextState.state, nextState.args, nextState.keyData)
+            if self.keyData then
+                self.stateQueueData[self.keyData] = self.currentState:getData()
+            end
+            if self.stateQueue:size() > 0 then
+                local nextState = self.stateQueue:removeMax()
+                self:setState(nextState.state, nextState.args, nextState.keyData, nextState.bufferData)
             end
         end
     end
 end
 
 --- Apply a new state with its arguments ---
-function GameStateManager:setState(newState, tbl, keyData)
-    assertState(newState)
+function StateManager:setState(newState, args, keyData, bufferData)
+    assert(type(newState) == "table" and newState.enter ~= nil, "State must be a table and have an enter function")
 
-    if self.currentState == newState and tbl == self.currentArgs then return end
+    if self.currentState == newState and args == self.currentArgs then return end
+    if self.currentState then
+        if self.currentState:isFinished() and self.currentState.getData then
+            local stateData = self.currentState:getData()
 
-    assertFunction(self.currentState, "enter")
-    self.previousState  = self.currentState
-    self.previousArgs   = self.currentArgs
-    self.currentArgs    = tbl
-    self.currentState   = newState:enter(self.currentArgs)
-	if keyData then self.keyData = keyData end
+            if type(bufferData) == "table" and type(stateData) == "table" then
+                for k, v in pairs(stateData) do
+                    bufferData[k] = v
+                end
+            elseif stateData then
+                bufferData = stateData
+            end
+        end
+
+        if self.currentState.exit then
+            self.currentState:exit()
+        end
+    end
+
+    self.previousState = self.currentState
+    self.previousArgs = self.currentArgs
+    self.previousKeyData = self.currentKeyData
+    self.previousBufferData = self.currentBufferData
+
+    self.currentArgs = args
+    self.currentKeyData = keyData
+    self.currentBufferData = bufferData
+    self.currentState = newState:enter(self.currentArgs, self.currentBufferData)
 end
 
-function GameStateManager:reloadState()
+function StateManager:reloadState()
     if self.currentState then
         assertFunction(self.currentState, "enter")
         if self.currentState.enter then
-            return self.currentState:enter()
+            return self.currentState:enter(self.currentArgs, self.currentBufferData)
         end
     end
 end
 
-function GameStateManager:revertState()
+function StateManager:revertState()
     if self.previousState then
         self:setState(self.previousState)
     end
 end
 
-function GameStateManager:mousemoved(x, y, ...)
+--- Event Handling ---
+function StateManager:mousemoved(x, y, ...)
     assert(type(x) == "number", "x must be a number")
     assert(type(y) == "number", "y must be a number")
     if self.currentState then
@@ -107,7 +133,7 @@ function GameStateManager:mousemoved(x, y, ...)
     end
 end
 
-function GameStateManager:wheelmoved(x, y)
+function StateManager:wheelmoved(x, y)
     assert(type(x) == "number", "x must be a number")
     assert(type(y) == "number", "y must be a number")
     if self.currentState then
@@ -118,7 +144,7 @@ function GameStateManager:wheelmoved(x, y)
     end
 end
 
-function GameStateManager:mousepressed(x, y, button)
+function StateManager:mousepressed(x, y, button)
     assert(type(x) == "number", "x must be a number")
     assert(type(y) == "number", "y must be a number")
     assert(type(button) == "number", "button must be a number")
@@ -130,7 +156,7 @@ function GameStateManager:mousepressed(x, y, button)
     end
 end
 
-function GameStateManager:mousereleased(x, y, button)
+function StateManager:mousereleased(x, y, button)
     assert(type(x) == "number", "x must be a number")
     assert(type(y) == "number", "y must be a number")
     assert(type(button) == "number", "button must be a number")
@@ -142,7 +168,7 @@ function GameStateManager:mousereleased(x, y, button)
     end
 end
 
-function GameStateManager:keypressed(key, scancode, isrepeat)
+function StateManager:keypressed(key, scancode, isrepeat)
     assert(type(key) == "string", "key must be a string")
     assert(type(scancode) == "string", "scancode must be a string")
     assert(type(isrepeat) == "boolean", "isrepeat must be a boolean")
@@ -154,7 +180,7 @@ function GameStateManager:keypressed(key, scancode, isrepeat)
     end
 end
 
-function GameStateManager:keyreleased(key, scancode)
+function StateManager:keyreleased(key, scancode)
     assert(type(key) == "string", "key must be a string")
     assert(type(scancode) == "string", "scancode must be a string")
     if self.currentState then
@@ -165,7 +191,7 @@ function GameStateManager:keyreleased(key, scancode)
     end
 end
 
-function GameStateManager:textinput(text)
+function StateManager:textinput(text)
     assert(type(text) == "string", "text must be a string")
     if self.currentState then
         assertFunction(self.currentState, "textinput")
@@ -175,18 +201,57 @@ function GameStateManager:textinput(text)
     end
 end
 
-function GameStateManager:update(dt)
-    assert(type(dt) == "number", "dt must be a number")
+--- Update the state ---
+function StateManager:update(dt)
+    assert(type(dt) == "number", "dt must be a number [in the update method of the state manager]")
+    
+    if self.gcThreshold and self.gcFrequency then
+        local currentMemory = collectgarbage("count")
+        local now = love.timer.getTime()
+        
+        
+        if currentMemory > self.gcThreshold and (not self.lastGCTime or now - self.lastGCTime >= self.gcCooldown) then
+            collectgarbage("collect")
+            self.lastGCTime = now
+            print(string.format("GC triggered: Memory before = %.2f KB, after = %.2f KB", currentMemory, collectgarbage("count")))
+            self.gcThreshold = math.max(self.gcThreshold, currentMemory * self.gcScale)
+        end
+    end
+
     if self.currentState then
+        if self.currentBufferData and self.currentState:isFinished() then
+            local stateData = self.currentState:getData()
+            
+            if type(self.currentBufferData) == "table" and type(stateData) == "table" then
+                for k, v in pairs(stateData) do
+                    if self.currentBufferData[k] == nil then
+                        self.currentBufferData[k] = v
+                    else
+                        if type(self.currentBufferData[k]) == "table" and type(v) == "table" then
+                            for innerK, innerV in pairs(v) do
+                                self.currentBufferData[k][innerK] = innerV
+                            end
+                        elseif type(self.currentBufferData[k]) == "string" and type(v) == "string" then
+                            self.currentBufferData[k] = self.currentBufferData[k] .. v
+                        end
+                    end
+                end
+            else
+                self.currentBufferData = stateData
+            end
+        end
+
         assertFunction(self.currentState, "update")
         if self.currentState.update then
             self.currentState:update(dt)
         end
     end
+    
     self:processStateQueue()
 end
 
-function GameStateManager:quit()
+--- Quit the game ---
+function StateManager:quit()
     if self.currentState then
         assertFunction(self.currentState, "quit")
         if self.currentState.quit then
@@ -195,7 +260,8 @@ function GameStateManager:quit()
     end
 end
 
-function GameStateManager:draw()
+--- Draw the current state ---
+function StateManager:draw()
     if self.currentState then
         assertFunction(self.currentState, "draw")
         if self.currentState.draw then
@@ -204,7 +270,8 @@ function GameStateManager:draw()
     end
 end
 
-function GameStateManager:resize(w, h)
+--- Resize window handling ---
+function StateManager:resize(w, h)
     assert(type(w) == "number", "w must be a number")
     assert(type(h) == "number", "h must be a number")
     if self.currentState then
@@ -215,4 +282,4 @@ function GameStateManager:resize(w, h)
     end
 end
 
-return GameStateManager
+return StateManager
