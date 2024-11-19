@@ -25,19 +25,38 @@ function game:update(dt)
     engine.players[0]:update(dt)
 end
 
-function game:draw()
-    love.graphics.setCanvas(engine.render.canvas)
+function game:draw3D()
+	love.graphics.setCanvas(engine.render.canvas)
     love.graphics.clear()
     engine.render:prepare()
     engine.render:addLight(engine.render.sun)
+
     for _, light in pairs(engine.render.lights) do
-        engine.render:addLight(ligth) 
+        engine.render:addLight(light)
     end
+
     engine.render:draw(engine.assets.models.map)
-    engine.cam:lookAt(engine.render.camera, engine.players[0].collider:getPosition() + engine.render.vec3(0, 2, 0), 5)
-    engine.players[0]:draw()
+    engine.cam:lookAt(
+        engine.render.camera,
+        engine.players[0].collider:getPosition() + engine.render.vec3(0, 2, 0),
+        5
+    )
+    engine.players[0]:draw3D()
     engine.render:present()
-    engine:drawShader(engine.players[0])
+end
+
+function game:draw2D()
+	love.graphics.setCanvas()
+	engine.players[0]:draw2D()
+
+	--- Draw 2D elements (HUD, UI, etc.) ---
+	love.graphics.setColor(1, 1, 1)
+    love.graphics.print(love.timer.getFPS(), 10, 10)
+end
+
+function game:draw()
+	self:draw3D()
+	self:draw2D()
 end
 
 function game:mousepressed(x, y, button)

@@ -52,18 +52,4 @@ function engine:loadRendering(preLoaded, postLoaded)
     postLoaded()
 end
 
-function engine:drawShader(player)
-    love.graphics.setCanvas()
-
-    --- Draw the shaders here ---
-    if player.inventory.isOpen or player.inventory.isAnimating then
-        love.graphics.setShader(self.shaders.blurShader)
-        self.shaders.blurShader:send("radius", 5)
-    end
-    -----------------------------
-
-    love.graphics.draw(self.render.canvas)
-    love.graphics.setShader()
-end
-
 return engine

@@ -79,12 +79,26 @@ function Player:update(dt)
 	self.inventory:updateAnimation(dt)
 end
 
-function Player:draw()
+function Player:draw3D()
 	local pos = self.collider:getPosition()
 	self.model:setTransform(self.transform)
 	self.model:translateWorld(pos)
 
 	engine.render:draw(self.model)
+end
+
+function Player:draw2D()
+    if self.inventory and (self.inventory.isOpen or self.inventory.isAnimating) then
+        love.graphics.setShader(engine.assets.shaders.blur)
+        engine.assets.shaders.blur:send("radius", 5)
+    end
+
+	love.graphics.draw(engine.render.canvas)
+    love.graphics.setShader()
+
+    if self.inventory.isOpen or self.inventory.isAnimating then
+        self.inventory:draw()
+    end
 end
 
 function Player:keysPressed(key)

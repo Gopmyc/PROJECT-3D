@@ -38,11 +38,6 @@ end
 
 function love.draw()
     engine.states:draw()
-
-    --- Draw 2D elements (HUD, UI, etc.) ---
-    -- // TODO : Implement in menu state : if self.players[0].inventory.isOpen or self.players[0].inventory.isAnimating then self.players[0].inventory:draw() end
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print(love.timer.getFPS(), 10, 10)
 end
 
 function love.mousepressed(x, y, button)

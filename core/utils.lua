@@ -45,7 +45,7 @@ function utils:print(msg, msgType)
     local color = colors.WHITE
 
     if type(msg) == "table" then
-        self:PrintTable(msg)
+        self:printTable(msg)
     else
         if msgType == "INFO" then
             prefix = "[INFO]"
