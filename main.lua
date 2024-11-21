@@ -33,6 +33,7 @@ function love.load()
 end
 
 function love.update(dt)
+    engine.timer = engine.timer + dt
     engine.states:update(dt)
 end
 
@@ -53,6 +54,9 @@ function love.mousemoved(x, y, dx, dy)
 end
 
 function love.keypressed(key, scancode, isrepeat)
+    if key == "f11" then
+        love.window.setFullscreen(not love.window.getFullscreen())
+    end
     engine.states:keypressed(key, scancode, isrepeat)
 end
 

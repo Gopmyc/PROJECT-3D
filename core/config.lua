@@ -6,6 +6,7 @@ local config = {
 			autoExposure	= true,
 			refraction		= true,
 			dayTime			= 0.5,
+			animateTime		= true
 		},
 	},
 	states = {

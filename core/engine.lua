@@ -21,6 +21,7 @@ function engine.load(preLoaded, postLoaded)
     self.render.sun     = self.render:newLight("sun")
     self.render.lights  = self.render.lights or {}
     self.players        = self.players or {}
+    self.timer          = self.timer or 0
     self.assets         = self.assets or {
         images	= {},
         fonts 	= {},

@@ -18,7 +18,7 @@ function StateManager.new()
     self.stateQueueData = {}
 
     --- Memory management ---
-    self.gcThreshold = 50 * 1024
+    self.gcThreshold = 1024
     self.gcScale = 1.5
     self.lastGCTime = 0
     self.gcCooldown = 1.0
@@ -104,6 +104,10 @@ function StateManager:setState(newState, args, keyData, bufferData)
     self.currentKeyData = keyData
     self.currentBufferData = bufferData
     self.currentState = newState:enter(self.currentArgs, self.currentBufferData)
+
+    if self.currentState.resize then
+        self.currentState:resize(love.graphics.getWidth(), love.graphics.getHeight())
+    end
 end
 
 function StateManager:reloadState()
