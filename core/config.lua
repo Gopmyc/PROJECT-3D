@@ -56,6 +56,25 @@ local config = {
 			{ action = "fadeOut",	duration = 2 },
 		},
 	},
+	keys = {
+		movements = {
+			forward		= "z",
+			backward	= "s",
+			left		= "q",
+			right		= "d",
+			jump		= "space",
+		},
+		inventory = {
+			open		= "tab",
+		},
+		views = {
+			switch		= "f2",
+		},
+		window = {
+			close		= "escape",
+			resize		= "f11",
+		},
+	},
 }
 
 return config

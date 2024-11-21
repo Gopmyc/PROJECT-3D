@@ -45,19 +45,19 @@ function Player:move(dt)
     local d = love.keyboard.isDown
     local ax, az = 0, 0
 
-    if d("z") then
+    if d(engine.config.keys.movements.forward) then
         ax = ax + math.cos(engine.cam.ry - math.pi / 2)
         az = az + math.sin(engine.cam.ry - math.pi / 2)
     end
-    if d("s") then
+    if d(engine.config.keys.movements.backward) then
         ax = ax + math.cos(engine.cam.ry + math.pi - math.pi / 2)
         az = az + math.sin(engine.cam.ry + math.pi - math.pi / 2)
     end
-    if d("q") then
+    if d(engine.config.keys.movements.left) then
         ax = ax + math.cos(engine.cam.ry - math.pi / 2 - math.pi / 2)
         az = az + math.sin(engine.cam.ry - math.pi / 2 - math.pi / 2)
     end
-    if d("d") then
+    if d(engine.config.keys.movements.right) then
         ax = ax + math.cos(engine.cam.ry + math.pi / 2 - math.pi / 2)
         az = az + math.sin(engine.cam.ry + math.pi / 2 - math.pi / 2)
     end
@@ -76,7 +76,7 @@ function Player:move(dt)
 end
 
 function Player:jump()
-    if self.collider.touchedFloor and love.keyboard.isDown("space") then
+    if self.collider.touchedFloor and love.keyboard.isDown(engine.config.keys.movements.jump) then
         self.collider.vy = self.jumpHeight
     end
 end
@@ -125,8 +125,8 @@ function Player:draw2D()
 end
 
 function Player:keysPressed(key)
-    if key == "tab" then self.inventory:toggle() love.mouse.setRelativeMode(not self.inventory.isOpen) end
-    if key == "f2" then self:setView((self:getCurrentView() == self:getView("third")) and "firts" or "third") end
+    if key == engine.config.keys.inventory.open then self.inventory:toggle() love.mouse.setRelativeMode(not self.inventory.isOpen) end
+    if key == engine.config.keys.views.switch then self:setView((self:getCurrentView() == self:getView("third")) and "firts" or "third") end
 end
 
 return Player

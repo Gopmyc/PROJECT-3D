@@ -54,7 +54,10 @@ function love.mousemoved(x, y, dx, dy)
 end
 
 function love.keypressed(key, scancode, isrepeat)
-    if key == "f11" then
+    if key == engine.config.keys.window.close then
+        love.event.quit()
+    end
+	if key == engine.config.keys.window.resize then
         love.window.setFullscreen(not love.window.getFullscreen())
     end
     engine.states:keypressed(key, scancode, isrepeat)
@@ -62,4 +65,9 @@ end
 
 function love.resize(w, h)
     engine.states:resize(w, h)
+end
+
+function love.quit()
+	if not engine.canQuit then return true end
+	return false
 end

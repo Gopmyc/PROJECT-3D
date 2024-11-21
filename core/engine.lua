@@ -22,6 +22,7 @@ function engine.load(preLoaded, postLoaded)
     self.render.lights  = self.render.lights or {}
     self.players        = self.players or {}
     self.timer          = self.timer or 0
+	self.canQuit		= false -- // It is set by default to 'false' for security, should I change it?
     self.assets         = self.assets or {
         images	= {},
         fonts 	= {},

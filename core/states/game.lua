@@ -13,6 +13,7 @@ function game:enter()
 
 	engine.physics.world:add(engine.physics:newPhysicsObject(engine.assets.models.map))
 	engine.players[0] = require("core/objects/player").new(engine.assets.models.player)
+	engine.canQuit = true
 
 	return self
 end
