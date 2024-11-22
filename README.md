@@ -43,7 +43,7 @@ The repository is designed to be modular and extensible, making it easier to add
 ## **Getting Started**  
 - **Clone the Repository**:  
   ```bash
-  git clone https://github.com/<username>/<repository>.git
+  git clone https://github.com/Gopmyc/PROJECT-3D.git
   ```  
 - **Explore the Tools, Modules, and Templates** to get started with 3DreamEngine-based projects.  
 
