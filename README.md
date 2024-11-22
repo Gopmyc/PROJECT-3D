@@ -49,3 +49,9 @@ The repository is designed to be modular and extensible, making it easier to add
 
 ---  
 Feel free to open issues or submit pull requests to contribute to the project!
+
+
+---
+
+## License
+This project is licensed under the [MIT License](LICENSE).
