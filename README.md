@@ -36,7 +36,7 @@ Ready-to-use templates to kickstart development, including:
 ## **Future Developments**  
 The repository is designed to be modular and extensible, making it easier to add new tools, modules, or templates as needed. Contributions and suggestions are welcome to help shape the evolution of the project and its goals.
 
-**Note**: The current story-driven game project in the main branch may be moved to a separate branch to maintain a clean separation between game development and engine development.  
+**Note**: The current story-driven game project in the main branch may be moved to a separate branch to maintain a clean separation between game development and engine development.  (Documentation is coming soon)
 
 ---
 

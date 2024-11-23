@@ -9,9 +9,9 @@ function Player.new(model)
 
     self.position = {x = -10, y = 15, z = 0}
     self:createCollider()
-    self.speed = 60
-    self.maxSpeed = 100
-    self.acceleration = 20000
+    self.speed = 20
+    self.maxSpeed = 40
+    self.acceleration = 10000
     self.airAcceleration = self.acceleration * 0.03
     self.velocity = {x = 0, y = 0, z = 0}
     self.jumpHeight = 5
@@ -22,7 +22,7 @@ function Player.new(model)
         firts = {vec = engine.render.vec3(0, 2, 0), up = 0},
         third = {vec = engine.render.vec3(0, 2, 0), up = 5},
     }
-    self.currentView = self.views["third"]
+    self.currentView = self.views["firts"]
 
 	--------- TEST [to delet] ---------
 	local item_t = item:new()

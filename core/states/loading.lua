@@ -4,6 +4,7 @@ loading.__index = loading
 function loading:enter(files, buffer)
     local self = setmetatable({}, loading)
 
+    engine:debugPrint("Enter in to loading state ["..files[1].category.."] ...")
     self.id = "loading"
     self.files = files
     self.buffer = buffer or {}
@@ -74,7 +75,6 @@ function loading:draw()
         "center"
     )
 
-    -- Affichage du temps restant si disponible
     if self.done > 0 then
         local minutes = math.floor(self.estimatedTimeRemaining / 60)
         local seconds = math.floor(self.estimatedTimeRemaining % 60)
@@ -107,7 +107,9 @@ end
 
 function loading:isFinished()
     local barFilled = math.abs(self.progressBar.currentWidth - self.progressBar.width) < 0.01
-    return self.done == self.count and barFilled
+    local isFinish = self.done == self.count and barFilled
+    if isFinish then engine:debugPrint("End of the loading state...") end
+    return isFinish
 end
 
 function loading:resize(w, h)
@@ -117,6 +119,7 @@ function loading:resize(w, h)
 end
 
 function loading:getData()
+    engine:debugPrint("Retrieving loading state data...")
     return self.buffer
 end
 

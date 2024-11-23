@@ -50,9 +50,6 @@ function utils:print(msg, msgType)
         if msgType == "INFO" then
             prefix = "[INFO]"
             color = colors.GREEN
-        elseif msgType == "WARN" then
-            prefix = "[WARN]"
-            color = colors.YELLOW
         elseif msgType == "ERROR" then
             prefix = "[ERROR]"
             color = colors.RED

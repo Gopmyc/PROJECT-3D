@@ -1,8 +1,9 @@
-love.mouse.setRelativeMode(true)
+require("run")
 
 function love.load()
-    --- Initializing the game engine ---
-    engine = engine or require("core/engine").load(function() end, function() end)
+    if engine.config.engineConfig.profiling then
+        engine.profiler:start() --> Use with caution because the profiler requires heavy operation
+    end
 
     --- Initializing the 2D assets for game ---
     engine.states:addStateToQueue(engine.states.loading, 2, {
@@ -15,24 +16,25 @@ function love.load()
         { category = "images", name = "tile"        },
         { category = "images", name = "document"    },
         { category = "images", name = "map"         },
-    }, "images", engine.assets.images)
+    })
 
     --- Initializing the 3D game assets ---
     engine.states:addStateToQueue(engine.states.loading, 1, {
         { category = "models", name = "map"         },
         { category = "models", name = "player"      },
-    }, "models", engine.assets.models)
+    })
 
     --- Initializing the shaders game assets ---
     engine.states:addStateToQueue(engine.states.loading, 1, {
         { category = "shaders", name = "blur"       },
-    }, "shaders", engine.assets.shaders)
+    })
 
     --- Transition to the game state once loading is finished ---
     engine.states:addStateToQueue(engine.states.game, 0)
 end
 
 function love.update(dt)
+    engine.profiler:update(dt) 
     engine.timer = engine.timer + dt
     engine.states:update(dt)
 end
@@ -67,7 +69,16 @@ function love.resize(w, h)
     engine.states:resize(w, h)
 end
 
+function love.focus(focus)
+    if focus then
+        engine.isWindowFocus = true
+    else
+        engine.isWindowFocus = false
+    end
+end
+
 function love.quit()
 	if not engine.canQuit then return true end
+    engine.profiler:stop()
 	return false
 end

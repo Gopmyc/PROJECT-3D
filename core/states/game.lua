@@ -4,28 +4,36 @@ game.__index = game
 function game:enter()
 	local self = setmetatable({}, game)
 
+	engine:debugPrint("Enter in to game state...")
 	self.id = "game"
 	self.data = {}
 
+	engine:initPhysics()
 	engine:loadRendering(function() end, function()
 		engine.render:setLODDistance(50)
 	end)
 
-	engine.physics.world:add(engine.physics:newPhysicsObject(engine.assets.models.map))
-	engine.players[0] = require("core/objects/player").new(engine.assets.models.player)
+	engine.physics.world:add(engine.physics:newPhysicsObject(engine.loader:getResource("models", "map")))
+	engine.players[0] = require("core/objects/player").new(engine.loader:getResource("models", "player"))
 	engine.canQuit = true
+	engine.physics.accumulator = 0
+	love.mouse.setRelativeMode(true)
 
 	return self
 end
 
 function game:update(dt)
-	engine.cam:update(dt)
-	if engine.timer >= 1 then
-		engine.render:update()
-		engine.timer = engine.timer - 1
+	if not engine.isWindowFocus then return end
+
+	engine.physics.accumulator = engine.physics.accumulator + math.min(dt, 0.016)
+	while engine.physics.accumulator >= 0.016 do
+		engine.physics.world:update(0.016)
+		engine.physics.accumulator = engine.physics.accumulator - 0.016
 	end
-	engine.physics.world:update(dt)
-	engine.players[0]:update(dt)
+
+	engine.cam:update(dt)
+	engine.render:update(dt)
+	engine.players[0]:update(0.016)
 
 	if engine.config.engineConfig.rendering.animateTime then
 		engine.config.engineConfig.rendering.dayTime = engine.config.engineConfig.rendering.dayTime + (dt * 0.02)
@@ -43,14 +51,14 @@ function game:draw3D()
 		engine.render:addLight(light)
 	end
 
-	engine.render:draw(engine.assets.models.map)
-    for index, player in pairs(engine.players) do
-        if not player then break end
+	engine.render:draw(engine.loader:getResource("models", "map"))
+	for index, player in pairs(engine.players) do
+		if not player then break end
 		local view = player:getCurrentView()
-	    engine.cam:lookAt(engine.render.camera, player:getCollider():getPosition() + view.vec, view.up)
-        if not (index == 0 and view == player:getView("firts")) then
-	        player:draw3D()
-        end
+		engine.cam:lookAt(engine.render.camera, player:getCollider():getPosition() + view.vec, view.up)
+		if not (index == 0 and view == player:getView("firts")) then
+			player:draw3D()
+		end
 	end
 	engine.render:present()
 end
@@ -58,8 +66,9 @@ end
 function game:draw2D()
 	love.graphics.setCanvas()
 	engine.players[0]:draw2D()
+
 	love.graphics.setColor(1, 1, 1)
-	love.graphics.print(love.timer.getFPS(), 10, 10)
+	engine.profiler:draw()
 end
 
 function game:draw()

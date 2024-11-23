@@ -35,6 +35,7 @@ end
 
 function Loader:getResource(category, name)
     if not self.resources[category][name] then
+        if not self.config.dynamic then assert(self.resources[category][name], "Warning: You are trying to access a resource that has not been loaded. Dynamic loading is disabled.") end
         if #self.cacheOrder >= self.cacheLimit then
             local oldest = table.remove(self.cacheOrder, 1)
             self:releaseResource(oldest.category, oldest.name)

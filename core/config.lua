@@ -8,6 +8,8 @@ local config = {
 			dayTime			= 0.5,
 			animateTime		= true
 		},
+		debugPrint = false,
+		profiling = false,
 	},
 	states = {
 		loading		=	{ path = "core/states/loading",							id = "loading"	},
@@ -15,6 +17,7 @@ local config = {
 		game		=	{ path = "core/states/game",							id = "game"		},
 	},
 	loader = {
+		dynamic = true,
 		assets = {
 			images = {
 				default		= { path = "assets/UI/items/default.png",			priority = 1 },
